@@ -35,23 +35,15 @@ export interface ButtonProps
   variant?: ButtonVariant;
   size?: ButtonSize;
   shape?: ButtonShape;
-  /** Leading icon — any ReactNode */
   iconLeft?: React.ReactNode;
-  /** Trailing icon — any ReactNode */
   iconRight?: React.ReactNode;
-  /** Show a loading spinner and disable interaction */
   loading?: boolean;
-  /** Stretch to fill parent width */
   fullWidth?: boolean;
-  /** Dimension overrides — when you need custom sizing */
   dimensions?: ButtonDimensions;
-  /** Elevate with matching glow shadow */
   glow?: boolean;
 }
 
-// ─────────────────────────────────────────────────────────────
-//  TOKENS
-// ─────────────────────────────────────────────────────────────
+
 
 const SIZE_MAP: Record<
   ButtonSize,
@@ -260,9 +252,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = "Button";
 
-// ─────────────────────────────────────────────────────────────
-//  SPINNER
-// ─────────────────────────────────────────────────────────────
 
 function Spinner({ size, color }: { size: number; color: string }) {
   return (
@@ -284,13 +273,9 @@ function Spinner({ size, color }: { size: number; color: string }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-//  BUTTON GROUP — layout helper
-// ─────────────────────────────────────────────────────────────
 
 export interface ButtonGroupProps {
   children: React.ReactNode;
-  /** Stack direction */
   direction?: "row" | "column";
   gap?: number;
   style?: CSSProperties;
@@ -317,9 +302,7 @@ export function ButtonGroup({
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-//  ICON BUTTON — square icon-only variant
-// ─────────────────────────────────────────────────────────────
+
 
 export interface IconButtonProps
   extends Omit<ButtonProps, "iconLeft" | "iconRight" | "fullWidth" | "children"> {
@@ -343,3 +326,4 @@ export function IconButton({ icon, size = "md", shape = "default", ...rest }: Ic
     </Button>
   );
 }
+
