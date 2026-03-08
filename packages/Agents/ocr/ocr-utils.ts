@@ -1,8 +1,14 @@
 import dotenv from "dotenv";
+import * as fs from "fs";
 dotenv.config();
 
 const API_KEY = process.env.RUNPOD_API_KEY as string;
 const STATUS_URL = process.env.STATUS_URL as string;
+
+dotenv.config();
+const IMAGES_DIR = "/Users/chromeblood/audit_checker/audit_checker/Agents/data/bmr-batch-1";
+const ENDPOINT = process.env.ENDPOINT as string;
+const PYTHON_SERVER_URL = "http://localhost:3002/process";
 
 
 export async function pollJob(jobId: string): Promise<any> {
@@ -107,3 +113,41 @@ export function cleanOCRResponse(content: string): string {
     return cleaned;
 }
 
+export async function invokeRunpod(imagePath: string, prompt: string) {
+    const imageBase64 = fs.readFileSync(imagePath).toString("base64");
+  
+    const submitRes = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        input: {
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image_url",
+                  image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+                },
+                { type: "text", text: prompt },
+              ],
+            },
+          ],
+          logprobs: true,
+          top_logprobs: 1,
+          temperature: 0,
+        },
+      }),
+    });
+  
+    if (!submitRes.ok) {
+      throw new Error(`Runpod failed: ${submitRes.statusText}`);
+    }
+  
+    const submitted = (await submitRes.json()) as { id: string };
+    console.log(`📤 Submitted to Runpod — job: ${submitted.id}`);
+    return await pollJob(submitted.id);
+  }

@@ -334,7 +334,40 @@ def crop_from_json(
             out_path = table_dir / f"{key}.jpg"
             cv2.imwrite(str(out_path), crop)
 
-    # ── Directory map ─────────────────────────────────────────────────────────
+    # ── Portion extraction ───────────────────────────────────────────────────
+    # Step 1: all tables already extracted above
+    # Step 2: map out boundaries using ALL table rects
+    # Step 3: crop only the strips between tables
+
+    full_img = _load(image_path or structure[0]["image_path"])
+    img_h    = full_img.shape[0]
+    img_w    = full_img.shape[1]
+
+    # Step 2 — collect ALL table rects sorted top→bottom
+    all_table_rects = sorted(
+        [t["table_rect"] for t in structure],
+        key=lambda r: r["y"]
+    )
+
+    # Step 3 — build between-table strips only
+    # strips = [(0, t1.y), (t1.y+h, t2.y), (t2.y+h, img_h)]
+    strip_bounds = []
+    prev_end = 0
+    for tr in all_table_rects:
+        strip_bounds.append((prev_end, tr["y"]))       # gap before this table
+        prev_end = tr["y"] + tr["h"]
+    strip_bounds.append((prev_end, img_h))             # gap after last table
+
+    # Crop and save each strip
+    for y1, y2 in strip_bounds:
+        if y2 <= y1:
+            continue
+        strip = full_img[y1:y2, 0:img_w]
+        if strip.size == 0:
+            continue
+        out_path = Path(output_dir) / f"x0_y{y1}_w{img_w}_h{y2-y1}.jpg"
+        cv2.imwrite(str(out_path), strip)
+        print(f"  portion  x0_y{y1}_w{img_w}_h{y2-y1}.jpg")
     print(f"\n{'='*60}")
     print(f" Directory Map  →  {output_dir}/")
     print(f"{'='*60}")
@@ -357,8 +390,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
 
         # ✏️  Edit these, then run:  python3 table_extractor_v2.py
-        IMAGE_PATH = "/Users/chromeblood/audit_checker/audit_checker/Agents/data/bmr-batch-1/BMR_batch_1_page-0045.jpg"
-        N_TABLES   = 1
+        IMAGE_PATH = "test.png"
+        N_TABLES   = 2
         OUTPUT_DIR = "output"
         JSON_PATH  = f"{OUTPUT_DIR}/structure.json"
 
