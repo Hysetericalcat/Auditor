@@ -78,11 +78,38 @@ export function extractTextContent(input: any): string {
     return String(input || "");
 }
 
+export function extractLogprobs(input: any): { tokens: { token: string; logprob: number }[]; avgLogprob: number } {
+    let data = input;
+
+    if (typeof data === "string") {
+        try { data = JSON.parse(data); } catch { /* leave as-is */ }
+    }
+    if (Array.isArray(data)) data = data[0];
+
+    const logprobsContent = data?.choices?.[0]?.logprobs?.content;
+
+    if (!Array.isArray(logprobsContent) || logprobsContent.length === 0) {
+        return { tokens: [], avgLogprob: 0 };
+    }
+
+    const tokens = logprobsContent.map((entry: any) => ({
+        token: entry.token as string,
+        logprob: entry.logprob as number,
+    }));
+
+    const avgLogprob = tokens.reduce((sum: number, t: { logprob: number }) => sum + t.logprob, 0) / tokens.length;
+
+    return { tokens, avgLogprob };
+}
+
 export function extractJsonMetadata(input: any): any {
     const text = extractTextContent(input);
     try {
         const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
         const contentToParse = codeBlockMatch ? codeBlockMatch[1] : text;
+        if (contentToParse == undefined) {
+            throw new Error("content undefined")
+        }
         const jsonMatch = contentToParse.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
 
         if (jsonMatch) {
@@ -98,8 +125,10 @@ export function extractJsonMetadata(input: any): any {
 export function extractValuesFromTags(input: any): string[] | null {
     const text = extractTextContent(input);
     try {
-        const match = text.match(/<values>\s*([\s\S]*?)\s*<\/values>/);
-        if (match) {
+        const match: any = text.match(/<values>\s*([\s\S]*?)\s*<\/values>/);
+        if (match == undefined) {
+            throw new Error("undefined!")
+        } else {
             return JSON.parse(match[1].trim());
         }
         return null;
@@ -118,55 +147,55 @@ export function cleanOCRResponse(content: string): string {
 
 export async function invokeRunpod(imagePath: string, prompt: string) {
     const imageBase64 = fs.readFileSync(imagePath).toString("base64");
-  
+
     const submitRes = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        input: {
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "image_url",
-                  image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
-                },
-                { type: "text", text: prompt },
-              ],
-            },
-          ],
-          logprobs: true,
-          top_logprobs: 1,
-          temperature: 0,
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${API_KEY}`,
         },
-      }),
+        body: JSON.stringify({
+            input: {
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "image_url",
+                                image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+                            },
+                            { type: "text", text: prompt },
+                        ],
+                    },
+                ],
+                logprobs: true,
+                top_logprobs: 1,
+                temperature: 0,
+            },
+        }),
     });
-  
+
     if (!submitRes.ok) {
-      throw new Error(`Runpod failed: ${submitRes.statusText}`);
+        throw new Error(`Runpod failed: ${submitRes.statusText}`);
     }
-  
+
     const submitted = (await submitRes.json()) as { id: string };
     console.log(`📤 Submitted to Runpod — job: ${submitted.id}`);
     return await pollJob(submitted.id);
-  }
+}
 
-  export async function findFilesWithExtensions(
+export async function findFilesWithExtensions(
     dir: string,
     extension: string
-  ) {
+) {
     const files = await fss.readdir(dir);
-  
+
     return files.filter((file) =>
-      file.endsWith(extension)
+        file.endsWith(extension)
     );
-  }
-  
- 
+}
+
+
 export async function invokeGeminiWithFallback(messages: any[], options: any = {}) {
     const keys = [
         process.env.GEMINI_KEY_1,

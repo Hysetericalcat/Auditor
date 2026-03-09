@@ -1,16 +1,17 @@
 import * as fs from "fs";
 import * as path from "path";
 import dotenv from "dotenv";
-import { pollJob, extractTextContent, cleanOCRResponse } from "../ocr-utils.js";
+import { pollJob, extractTextContent, cleanOCRResponse, extractLogprobs } from "../ocr-utils.js";
 import { findFilesWithExtensions } from "../ocr-utils.js"
 import { invokeGeminiWithFallback } from "../ocr-utils.js"
-import {Table_count} from "../ocr-utils.js"
+import { Table_count } from "../ocr-utils.js"
 dotenv.config();
 
 const IMAGES_DIR = "/Users/chromeblood/audit_checker/audit_checker/Agents/data/bmr-batch-1";
 const API_KEY = process.env.RUNPOD_API_KEY as string;
 const ENDPOINT = process.env.ENDPOINT as string;
 const PYTHON_SERVER_URL = "http://localhost:3002/process";
+const LOG_PROB_FILE = "/Users/chromeblood/Auditor/packages/Agents/ocr/files"
 
 export type classes = "names_present" | "specifications_present" | "none"
 
@@ -86,6 +87,7 @@ export async function Stage2_agent(pages_no: string | number, tableId: string, s
   console.log(`🚀 [STAGE 2] Processing ${cellKeys.length} cells with concurrency 5...`);
 
   const results: Record<string, any> = {};
+  const logprobsMap: Record<string, { value: string; tokens: { token: string; logprob: number }[]; avgLogprob: number }> = {};
   const concurrencyLimit = 5;
   const queue = [...cellKeys];
 
@@ -98,6 +100,7 @@ export async function Stage2_agent(pages_no: string | number, tableId: string, s
       if (!fs.existsSync(filePath)) {
         console.warn(`⚠️ [SKIP] Cell image not found: ${filePath}`);
         results[key] = "";
+        logprobsMap[key] = { value: "", tokens: [], avgLogprob: 0 };
         continue;
       }
 
@@ -116,12 +119,15 @@ export async function Stage2_agent(pages_no: string | number, tableId: string, s
         const output = await invokeRunpod(filePath, prompt);
         const rawContent = extractTextContent(output);
         const value = cleanOCRResponse(rawContent);
+        const logprobs = extractLogprobs(output);
 
         results[key] = value;
-        console.log(`✅ Extracted [${key}]: ${value}`);
+        logprobsMap[key] = { value, tokens: logprobs.tokens, avgLogprob: logprobs.avgLogprob };
+        console.log(`✅ Extracted [${key}]: ${value} (avg logprob: ${logprobs.avgLogprob.toFixed(4)})`);
       } catch (err) {
         console.error(`❌ Error extracting [${key}]:`, err);
         results[key] = "ERROR";
+        logprobsMap[key] = { value: "ERROR", tokens: [], avgLogprob: 0 };
       }
     }
   }
@@ -132,6 +138,10 @@ export async function Stage2_agent(pages_no: string | number, tableId: string, s
   const resultsPath = path.join(tableDir, "results.json");
   fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
   console.log(`💾 Results saved to: ${resultsPath}`);
+
+  const logprobsPath = path.join(LOG_PROB_FILE, "logprobs.json");
+  fs.writeFileSync(logprobsPath, JSON.stringify(logprobsMap, null, 2));
+  console.log(`📊 Logprobs saved to: ${logprobsPath}`);
 
   return results;
 }
@@ -217,12 +227,15 @@ function renderStructureHTML(tableData: any, extractedValues: Record<string, any
     maxRow = Math.max(maxRow, structure[key].row);
     maxCol = Math.max(maxCol, structure[key].col);
   });
-  const grid: string[][] = Array.from({ length: maxRow }, () => Array(maxCol).fill(""));
+  const grid: any = Array.from({ length: maxRow }, () => Array(maxCol).fill(""));
   const areas: Record<string, number> = {};
+  if (areas == undefined) {
+    throw new Error("Areas undefined")
+  }
 
   cellKeys.forEach(key => {
     const parts: any = {};
-    key.split("_").forEach(p => {
+    key.split("_").forEach((p: any) => {
       parts[p[0]] = parseInt(p.substring(1));
     });
     areas[key] = (parts.w || 1) * (parts.h || 1);
@@ -231,14 +244,20 @@ function renderStructureHTML(tableData: any, extractedValues: Record<string, any
     const rIdx = row - 1;
     const cIdx = col - 1;
     if (rIdx >= 0 && rIdx < maxRow && cIdx >= 0 && cIdx < maxCol) {
-      const currentKey = grid[rIdx][cIdx];
+      if (grid == undefined) {
+        throw new Error("grid undefined")
+      }
+      const currentKey: any = grid[rIdx][cIdx];
+      if (areas[currentKey] == undefined) {
+        throw new Error("Area undefined")
+      }
       if (!currentKey || areas[key] < areas[currentKey]) {
         grid[rIdx][cIdx] = key;
       }
     }
   });
 
-  const occupied = Array.from({ length: maxRow }, () => Array(maxCol).fill(false));
+  const occupied: any = Array.from({ length: maxRow }, () => Array(maxCol).fill(false));
 
   let html = `<table border="1" style="border-collapse: collapse; font-family: 'Inter', sans-serif; background: white; border: 1px solid #333; table-layout: fixed;">`;
   html += `<tbody>`;
@@ -274,7 +293,7 @@ function renderStructureHTML(tableData: any, extractedValues: Record<string, any
           }
         }
         const parts: any = {};
-        key.split("_").forEach(p => {
+        key.split("_").forEach((p: any) => {
           parts[p[0]] = parseInt(p.substring(1));
         });
 
@@ -457,7 +476,7 @@ function renderPageHTML(
     <div class="report-header">BMR Page Report</div>
 `;
 
- 
+
   html += `    <div class="section">
       <div class="section-title">1. Name Content</div>
       <div class="section-content">`;
@@ -487,7 +506,7 @@ function renderPageHTML(
   }
   html += `\n      </div>\n    </div>\n`;
 
-  
+
   html += `    <div class="section">
       <div class="section-title">3. Other</div>
       <div class="section-content">`;
@@ -504,7 +523,7 @@ function renderPageHTML(
       <div class="section-content">`;
   if (tables.length > 0) {
     for (let i = 0; i < tables.length; i++) {
-      const t = tables[i];
+      const t: any = tables[i];
       html += `\n        <div class="table-label">Table ${i + 1}</div>`;
       html += `\n        <div class="table-wrapper">`;
       html += renderStructureHTML(t.table_data, t.extracted_values);
@@ -522,7 +541,6 @@ function renderPageHTML(
 export async function OCR(pages_no: string | number) {
   console.log(`\n🚀 [OCR] Starting full OCR pipeline for page ${pages_no}...`);
 
-  // Run TableOCR and TextOCR concurrently
   const [tableResults, textResults] = await Promise.all([
     TableOCR(pages_no),
     TextOCR(pages_no)
