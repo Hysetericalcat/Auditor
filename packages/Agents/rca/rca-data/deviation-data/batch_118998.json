@@ -1,0 +1,143 @@
+{
+    "batch_number": "118998",
+    "manufacturing_date": "2025-03-04",
+    "deviations": [
+        {
+            "parameter": "api_assay_bempedoic_acid",
+            "value": 100.0,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": 0,
+            "deviation_percentage": "0%",
+            "specification_range": "98.0-102.0",
+            "within_spec": true,
+            "severity": "None"
+        },
+        {
+            "parameter": "api_water_content_bempedoic_acid",
+            "value": 0.0,
+            "unit": "%",
+            "target": 0.0,
+            "deviation_numeric": 0,
+            "deviation_percentage": "0%",
+            "specification_range": "NMT 0.5",
+            "within_spec": true,
+            "severity": "None"
+        },
+        {
+            "parameter": "bempedoic_acid_granules_yield",
+            "value": 152.40,
+            "unit": "kg",
+            "target": 153.75,
+            "deviation_numeric": -1.35,
+            "deviation_percentage": "-0.88%",
+            "specification_range": "95-102% of theoretical",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "binder_spray_rate",
+            "value": 2.118,
+            "unit": "kg/min",
+            "target": 2.018,
+            "deviation_numeric": 0.100,
+            "deviation_percentage": "+5.0%",
+            "specification_range": "No formal spec",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "wet_mass_amperage_end",
+            "value": 26.9,
+            "unit": "Amps",
+            "target": 25.5,
+            "typical_range": "24.5-26.5",
+            "deviation_numeric": 1.4,
+            "deviation_percentage": "+5.5%",
+            "specification_range": "Process monitoring",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "unaccountable_loss_milling",
+            "value": 1.300,
+            "unit": "kg",
+            "target": "<1.0",
+            "deviation_numeric": 0.3,
+            "deviation_percentage": "+30% above typical",
+            "specification_range": "NMT 2.0",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "blend_uniformity_ezetimibe_max",
+            "value": 104.4,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": 4.4,
+            "deviation_percentage": "+4.4%",
+            "specification_range": "90-110",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "blend_uniformity_ezetimibe_avg",
+            "value": 101.7,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": 1.7,
+            "deviation_percentage": "+1.7%",
+            "specification_range": "95-105",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "blend_assay_ezetimibe",
+            "value": 102.1,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": 2.1,
+            "deviation_percentage": "+2.1%",
+            "specification_range": "90.0-110.0",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "water_content_kf",
+            "value": 1.9,
+            "unit": "%",
+            "target": "<2.0",
+            "deviation_numeric": -0.1,
+            "deviation_percentage": "-5% below limit",
+            "specification_range": "NMT 5.0",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "content_uniformity_ezetimibe_av",
+            "value": 5.6,
+            "unit": "AV",
+            "target": "<5.0",
+            "deviation_numeric": 0.6,
+            "deviation_percentage": "+12% above target",
+            "specification_range": "NMT 15.0",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "content_uniformity_ezetimibe_min",
+            "value": 96.0,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": -4.0,
+            "deviation_percentage": "-4.0%",
+            "specification_range": "75-125",
+            "within_spec": true,
+            "severity": "Minor"
+        }
+    ],
+    "deviation_count": 11,
+    "critical_deviations": 0,
+    "major_deviations": 0,
+    "minor_deviations": 11
+}

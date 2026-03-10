@@ -1,39 +1,48 @@
 import docker
+import base64
+
 client = docker.from_env()
 
 def run_code(code: str, dataframe=None, timeout: int = 30) -> dict:
-    #content inside the quotes only get transferred.
-    full_code = code
+
+    encoded = base64.b64encode(code.encode()).decode()
+    command = f"python -c \"import base64; exec(base64.b64decode('{encoded}').decode())\""
+
+    container = None
     try:
-        result = client.containers.run(
+        container = client.containers.create(
             image="python-sandbox",
-            command="python -",      #tells to take stdin as input to run ,not a file
-            stdin_open=True,
-            input=full_code.encode(),   
+            command=command,
             mem_limit="256m",
             cpu_quota=50000,
-            network_mode="none",         
+            network_mode="none",
             read_only=True,
-            tmpfs={"/tmp": ""},          
-            remove=True,
-            detach=False,
-            stdout=True,
-            stderr=True,
-            timeout=timeout
+            tmpfs={"/tmp": ""},
         )
-        return {
-            "success": True,
-            "output": result.decode("utf-8").strip()
-        }
+        container.start()
+        container.wait(timeout=timeout)
 
-    except docker.errors.ContainerError as e:
+        logs = container.logs(stdout=True, stderr=True).decode("utf-8").strip()
+        exit_code = container.attrs.get("State", {}).get("ExitCode")
+
+    
+        container.reload()
+        exit_code = container.attrs["State"]["ExitCode"]
+
+        if exit_code == 0:
+            return {"success": True, "output": logs}
+        else:
+            return {"success": False, "output": logs}
+
+    except Exception as e:
         return {
             "success": False,
-            "output": e.stderr.decode("utf-8").strip()
+            "output": f"Execution error: {str(e)}"
         }
 
-    except docker.errors.APIError as e:
-        return {
-            "success": False,
-            "output": f"Docker API error: {str(e)}"
-        }
+    finally:
+        if container:
+            try:
+                container.remove(force=True)
+            except Exception:
+                pass

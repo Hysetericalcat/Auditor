@@ -1,0 +1,110 @@
+{
+    "batch_number": "118995",
+    "manufacturing_date": "2025-02-19",
+    "deviations": [
+        {
+            "parameter": "api_assay_bempedoic_acid",
+            "value": 99.7,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": -0.3,
+            "deviation_percentage": "-0.3%",
+            "specification_range": "98.0-102.0",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "api_water_content_bempedoic_acid",
+            "value": 0.07,
+            "unit": "%",
+            "target": 0.0,
+            "deviation_numeric": 0.07,
+            "deviation_percentage": "+0.07%",
+            "specification_range": "NMT 0.5",
+            "within_spec": true,
+            "severity": "None"
+        },
+        {
+            "parameter": "binder_spray_rate",
+            "value": 2.125,
+            "unit": "kg/min",
+            "target": 2.018,
+            "deviation_numeric": 0.107,
+            "deviation_percentage": "+5.3%",
+            "specification_range": "No formal spec",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "wet_mass_amperage_end",
+            "value": 26.7,
+            "unit": "Amps",
+            "target": 25.5,
+            "typical_range": "24.5-26.5",
+            "deviation_numeric": 1.2,
+            "deviation_percentage": "+4.7%",
+            "specification_range": "Process monitoring",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "final_lod",
+            "value": 0.8,
+            "unit": "%",
+            "target": "<0.8",
+            "deviation_numeric": 0.0,
+            "deviation_percentage": "At upper limit",
+            "specification_range": "NMT 1.0",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "dissolution_ezetimibe_min",
+            "value": 86,
+            "unit": "%",
+            "target": ">85",
+            "deviation_numeric": 1,
+            "deviation_percentage": "+1.2% above minimum",
+            "specification_range": "NLT 80 (Q)",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "dissolution_bempedoic_avg",
+            "value": 86,
+            "unit": "%",
+            "target": 90,
+            "deviation_numeric": -4,
+            "deviation_percentage": "-4.4%",
+            "specification_range": "NLT 80 (Q)",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "dissolution_bempedoic_min",
+            "value": 84,
+            "unit": "%",
+            "target": 85,
+            "deviation_numeric": -1,
+            "deviation_percentage": "-1.2%",
+            "specification_range": "NLT 80 (Q)",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "total_impurities_bempedoic",
+            "value": 0.2,
+            "unit": "%",
+            "target": "<0.2",
+            "deviation_numeric": 0.0,
+            "deviation_percentage": "At limit",
+            "specification_range": "NMT 0.7",
+            "within_spec": true,
+            "severity": "Minor"
+        }
+    ],
+    "deviation_count": 8,
+    "critical_deviations": 0,
+    "major_deviations": 0,
+    "minor_deviations": 8
+}

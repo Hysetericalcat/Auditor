@@ -1,0 +1,144 @@
+{
+    "batch_number": "119069",
+    "manufacturing_date": "2025-03-11",
+    "deviations": [
+        {
+            "parameter": "ezetimibe_granules_yield",
+            "value": 59.45,
+            "unit": "kg",
+            "target": 60.00,
+            "deviation_numeric": -0.55,
+            "deviation_percentage": "-0.92%",
+            "specification_range": "95-102% of theoretical",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "bempedoic_acid_granules_yield",
+            "value": 152.25,
+            "unit": "kg",
+            "target": 153.75,
+            "deviation_numeric": -1.50,
+            "deviation_percentage": "-0.98%",
+            "specification_range": "95-102% of theoretical",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "binder_spray_rate",
+            "value": 2.124,
+            "unit": "kg/min",
+            "target": 2.018,
+            "deviation_numeric": 0.106,
+            "deviation_percentage": "+5.3%",
+            "specification_range": "No formal spec",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "unaccountable_loss_milling",
+            "value": 1.445,
+            "unit": "kg",
+            "target": "<1.0",
+            "deviation_numeric": 0.445,
+            "deviation_percentage": "+44.5% above typical",
+            "specification_range": "NMT 2.0",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "blend_uniformity_bempedoic_min",
+            "value": 94.0,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": -6.0,
+            "deviation_percentage": "-6.0%",
+            "specification_range": "95.0-105.0",
+            "within_spec": false,
+            "severity": "Major"
+        },
+        {
+            "parameter": "blend_uniformity_bempedoic_avg",
+            "value": 96.9,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": -3.1,
+            "deviation_percentage": "-3.1%",
+            "specification_range": "95.0-105.0",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "compression_hardness_min",
+            "value": 32.2,
+            "unit": "N",
+            "target": 95,
+            "specification_lower": 70,
+            "specification_upper": 120,
+            "deviation_numeric": -37.8,
+            "deviation_percentage": "-54% below spec",
+            "specification_range": "70-120 N",
+            "within_spec": false,
+            "severity": "Critical"
+        },
+        {
+            "parameter": "compression_hardness_avg",
+            "value": 86.0,
+            "unit": "N",
+            "target": 95,
+            "deviation_numeric": -9.0,
+            "deviation_percentage": "-9.5%",
+            "specification_range": "70-120 N",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "dissolution_bempedoic_min",
+            "value": 81,
+            "unit": "%",
+            "target": 85,
+            "deviation_numeric": -4,
+            "deviation_percentage": "-4.7%",
+            "specification_range": "NLT 80 (Q)",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "dissolution_bempedoic_avg",
+            "value": 84,
+            "unit": "%",
+            "target": 90,
+            "deviation_numeric": -6,
+            "deviation_percentage": "-6.7%",
+            "specification_range": "NLT 80 (Q)",
+            "within_spec": true,
+            "severity": "Moderate"
+        },
+        {
+            "parameter": "total_impurities_bempedoic",
+            "value": 0.3,
+            "unit": "%",
+            "target": "<0.2",
+            "deviation_numeric": 0.1,
+            "deviation_percentage": "+50% above target",
+            "specification_range": "NMT 0.7",
+            "within_spec": true,
+            "severity": "Minor"
+        },
+        {
+            "parameter": "assay_ezetimibe",
+            "value": 98.5,
+            "unit": "%",
+            "target": 100.0,
+            "deviation_numeric": -1.5,
+            "deviation_percentage": "-1.5%",
+            "specification_range": "95.0-105.0",
+            "within_spec": true,
+            "severity": "Minor"
+        }
+    ],
+    "deviation_count": 12,
+    "critical_deviations": 1,
+    "major_deviations": 1,
+    "minor_deviations": 10
+}
