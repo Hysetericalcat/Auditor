@@ -1,8 +1,5 @@
 import { createDeepAgent, type FileData } from "deepagents";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { tool } from "@langchain/core/tools";
-import { z } from "zod";
-import { runSandboxCode } from "../utils/code-utils";
 import { InMemoryStore } from "@langchain/langgraph-checkpoint";
 import { CompositeBackend, StateBackend, StoreBackend } from "deepagents";
 import { webExtract, webSearch } from "../utils/websearch-utils";
@@ -10,8 +7,18 @@ import { extractLastThreeBatches, extractTargetBatch } from "../utils/data-utils
 import { MemorySaver } from "@langchain/langgraph";
 import { submitImplementationPlan } from "../utils/implementation-utils"
 import { executePython } from "../utils/code-utils"
+import { WebSocket } from "ws";
 import fs from "fs";
 import path from "path";
+import { EventEmitter } from "events";
+
+export const logStream = new EventEmitter();
+
+export interface LogMessage {
+    message: string;
+    timestamp: string;
+    level: "info" | "error" | "debug";
+}
 
 
 function createFileData(content: string): FileData {
@@ -38,6 +45,50 @@ function loadSkillFiles(): Record<string, FileData> {
     }
 
     return files;
+}
+
+
+const checkModel = new ChatGoogleGenerativeAI({
+    model: "gemini-2.5-flash",
+    apiKey: `${process.env.GEMINI_KEY}`,
+    maxRetries: 0,
+    temperature: 0,
+});
+
+
+export async function Check(query: string): Promise<boolean> {
+    const skillPath = path.resolve(__dirname, "../skills/Check/SKILL.md");
+    const skillContent = fs.readFileSync(skillPath, "utf-8");
+
+    const systemPrompt = `You are a guardrail classifier for a pharmaceutical batch manufacturing analysis agent.
+
+Your ONLY job is to determine whether a user query falls within the allowed scope of pharmaceutical manufacturing.
+
+Here is your reference skill document that defines the allowed and disallowed topics:
+
+---
+${skillContent}
+---
+
+## Instructions
+
+Analyze the user's query and decide:
+- Return EXACTLY "true" if the query is related to pharmaceutical manufacturing, batch analysis, RCA, deviation analysis, process quality, GMP compliance, or any topic listed under "Allowed Topics" in the skill document.
+- Return EXACTLY "false" if the query falls outside pharmaceutical manufacturing scope, or matches any "Disallowed Topics" in the skill document.
+
+You must respond with ONLY the word "true" or "false". No explanations, no extra text, no punctuation — just the single word.`;
+
+    const response = await checkModel.invoke([
+        { role: "system" as const, content: systemPrompt },
+        { role: "user" as const, content: query },
+    ]);
+
+    const result = (typeof response.content === "string"
+        ? response.content
+        : ""
+    ).trim().toLowerCase();
+
+    return result === "true";
 }
 
 
@@ -146,14 +197,23 @@ export const defaultStreamLogger: StreamCallback = (event) => {
 };
 
 
-export async function Main(userMessage: string, onStream: StreamCallback = defaultStreamLogger) {
+function sendWS(ws: WebSocket, event: any) {
+    if (ws && ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify(event));
+    }
+}
+
+
+export async function Main(userMessage: string, onStream: StreamCallback = defaultStreamLogger, ws: WebSocket) {
     const threadId = `thread-${Date.now()}`;
     const config = {
         configurable: { thread_id: threadId },
         version: "v2" as const,
     };
 
-    onStream({ type: "status", data: "Starting batch analysis..." });
+    const initialStatus = { type: "status", data: "Starting batch analysis..." };
+    onStream(initialStatus as StreamEvent);
+    sendWS(ws, initialStatus);
 
     const eventStream = agent.streamEvents(
         { messages: [{ role: "user", content: userMessage }], files: skillFiles },
@@ -164,10 +224,14 @@ export async function Main(userMessage: string, onStream: StreamCallback = defau
 
     for await (const event of eventStream) {
         if (event.event === "on_tool_start") {
-            onStream({ type: "tool_start", tool: event.name, data: event.data.input });//just telling me what has happend ,what has not.
+            const toolEvent = { type: "tool_start", tool: event.name, data: `${event.name} analysis started` };
+            onStream(toolEvent as StreamEvent);
+            sendWS(ws, toolEvent);
         }
         if (event.event === "on_tool_end") {
-            onStream({ type: "tool_end", tool: event.name, data: "done" });
+            const toolEvent = { type: "tool_end", tool: event.name, data: "done" };
+            onStream(toolEvent as StreamEvent);
+            sendWS(ws, toolEvent);
 
             if (event.name === "submit_implementation_plan") {
                 implementationPlan = event.data.output;
@@ -175,10 +239,12 @@ export async function Main(userMessage: string, onStream: StreamCallback = defau
         }
     }
 
-    onStream({
+    const planEvent = {
         type: "plan_approval",
         data: implementationPlan,
-    });
+    };
+    onStream(planEvent as StreamEvent);
+    sendWS(ws, planEvent);
 
     return {
         threadId,
@@ -187,18 +253,22 @@ export async function Main(userMessage: string, onStream: StreamCallback = defau
 }
 
 
-export async function Resume(threadId: string, approved: boolean, onStream: StreamCallback = defaultStreamLogger) {
+export async function Resume(threadId: string, approved: boolean, onStream: StreamCallback = defaultStreamLogger, ws: WebSocket) {
     const config = {
         configurable: { thread_id: threadId },
         version: "v2" as const,
     };
 
     if (!approved) {
-        onStream({ type: "status", data: "Analysis cancelled by user." });
+        const cancelStatus = { type: "status", data: "Analysis cancelled by user." };
+        onStream(cancelStatus as StreamEvent);
+        sendWS(ws, cancelStatus);
         return { cancelled: true };
     }
 
-    onStream({ type: "status", data: "Plan approved. Running statistical tests..." });
+    const approveStatus = { type: "status", data: "Plan approved. Running statistical tests..." };
+    onStream(approveStatus as StreamEvent);
+    sendWS(ws, approveStatus);
 
     // Resume the agent from where it was interrupted
     const eventStream = agent.streamEvents(
@@ -210,20 +280,27 @@ export async function Resume(threadId: string, approved: boolean, onStream: Stre
 
     for await (const event of eventStream) {
         if (event.event === "on_tool_start") {
-            onStream({ type: "tool_start", tool: event.name, data: event.data.input });
+            const toolEvent = { type: "tool_start", tool: event.name, data: event.data.input };
+            onStream(toolEvent as StreamEvent);
+            sendWS(ws, toolEvent);
         }
         if (event.event === "on_tool_end") {
-            onStream({ type: "tool_end", tool: event.name, data: "done" });
+            const toolEvent = { type: "tool_end", tool: event.name, data: "done" };
+            onStream(toolEvent as StreamEvent);
+            sendWS(ws, toolEvent);
         }
         if (event.event === "on_chat_model_stream") {
             const content = event.data?.chunk?.content;
             if (content) {
                 finalOutput += content;
+                sendWS(ws, { type: "chunk", data: content });
             }
         }
     }
 
-    onStream({ type: "final_output", data: finalOutput });
+    const finalEvent = { type: "final_output", data: finalOutput };
+    onStream(finalEvent as StreamEvent);
+    sendWS(ws, finalEvent);
 
     return { report: finalOutput };
 }
